@@ -1,3 +1,5 @@
+// RedFlagChecker.tsx (Improved Display of AI Summary)
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -107,8 +109,8 @@ export default function RedFlagChecker() {
 
         {aiSummary && (
           <div className="mt-4 bg-gray-100 p-4 rounded shadow">
-            <div className="text-sm font-semibold mb-2 text-yellow-700 flex items-center gap-1">
-              <span role="img" aria-label="warning">⚠️</span> AI Summary (for your awareness):
+            <div className="text-sm font-semibold mb-3 text-yellow-700 flex items-center gap-1">
+              ⚠️ Builder Risk Summary
             </div>
 
             <div
