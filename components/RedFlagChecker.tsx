@@ -1,13 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { markdownToHtml } from "@/lib/markdown";
 
 export default function RedFlagChecker() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [htmlSummary, setHtmlSummary] = useState<string>("");
   const [fullReport, setFullReport] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function convert() {
+      if (aiSummary) {
+        const html = await markdownToHtml(aiSummary);
+        setHtmlSummary(html);
+      }
+    }
+    convert();
+  }, [aiSummary]);
 
   const handleCheck = async () => {
     if (!name.trim()) return;
@@ -54,8 +65,6 @@ export default function RedFlagChecker() {
     link.click();
     URL.revokeObjectURL(url);
   };
-
-  const htmlSummary = useMemo(() => markdownToHtml(aiSummary || ""), [aiSummary]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">

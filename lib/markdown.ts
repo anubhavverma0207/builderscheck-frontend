@@ -1,5 +1,5 @@
 import { marked } from "marked";
 
-export function markdownToHtml(md: string): string {
-  return marked(md || "");
+export async function markdownToHtml(md: string): Promise<string> {
+  return await marked(md || "");
 }
