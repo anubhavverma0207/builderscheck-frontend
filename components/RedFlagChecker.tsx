@@ -29,7 +29,7 @@ export default function RedFlagChecker() {
 
       if (response.ok && data.report) {
         const parsed = JSON.parse(data.report);
-        setParsedSummary(parsed?.ai_summary || "No summary available.");
+        setParsedSummary(parsed?.parsed_summary || "No summary available.");
         setFullReport(data.report);
       } else {
         setParsedSummary("An error occurred while analyzing the builder.");
@@ -93,9 +93,28 @@ export default function RedFlagChecker() {
         )}
 
         {parsedSummary && (
-          <div className="mt-4 text-sm text-gray-800 bg-gray-100 p-4 rounded shadow">
-            <h2 className="font-semibold mb-2">✅ AI Summary:</h2>
-            <p>{parsedSummary}</p>
+          <div className="mt-4 bg-white border rounded-lg shadow-md p-4">
+            <div className="flex items-center mb-2">
+              <span
+                className={`text-xl ${
+                  parsedSummary.toLowerCase().includes("no red flags")
+                    ? "text-green-600"
+                    : "text-yellow-600"
+                }`}
+              >
+                {parsedSummary.toLowerCase().includes("no red flags") ? "✅" : "⚠️"}
+              </span>
+              <h2 className="ml-2 font-semibold text-gray-800">AI Summary</h2>
+            </div>
+
+            <ul className="list-disc pl-6 space-y-2 text-sm text-gray-700">
+              {parsedSummary
+                .split("•")
+                .filter((point) => point.trim() !== "")
+                .map((point, idx) => (
+                  <li key={idx}>{point.trim()}</li>
+                ))}
+            </ul>
 
             {fullReport && (
               <button
