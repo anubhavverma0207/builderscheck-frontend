@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx (Improved Display of AI Summary)
+// RedFlagChecker.tsx — Improved AI Summary with Section Parsing and Cautious Tone
 
 "use client";
 
@@ -9,18 +9,11 @@ export default function RedFlagChecker() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [htmlSummary, setHtmlSummary] = useState<string>("");
   const [fullReport, setFullReport] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function convert() {
-      if (aiSummary) {
-        const html = await markdownToHtml(aiSummary);
-        setHtmlSummary(html);
-      }
-    }
-    convert();
-  }, [aiSummary]);
+  const [companyLines, setCompanyLines] = useState<string[]>([]);
+  const [redFlags, setRedFlags] = useState<string[]>([]);
+  const [riskParagraph, setRiskParagraph] = useState<string>("");
 
   const handleCheck = async () => {
     if (!name.trim()) return;
@@ -44,8 +37,10 @@ export default function RedFlagChecker() {
 
       if (response.ok && data.report) {
         const parsed = JSON.parse(data.report);
-        setAiSummary(parsed?.ai_summary || "No summary available.");
+        const raw = parsed?.ai_summary || "No summary available.";
+        setAiSummary(raw);
         setFullReport(data.report);
+        parseSummarySections(raw);
       } else {
         setAiSummary("An error occurred while analyzing the builder.");
       }
@@ -55,6 +50,33 @@ export default function RedFlagChecker() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const parseSummarySections = (summary: string) => {
+    const lines = summary.split("\n").map((line) => line.trim()).filter(Boolean);
+    const companies: string[] = [];
+    const flags: string[] = [];
+    let riskText = "";
+
+    let mode: "company" | "flags" | "risk" = "company";
+
+    for (const line of lines) {
+      if (/key red flags/i.test(line)) {
+        mode = "flags";
+        continue;
+      } else if (/risk assessment/i.test(line)) {
+        mode = "risk";
+        continue;
+      }
+
+      if (mode === "company" && line.startsWith("•")) companies.push(line);
+      else if (mode === "flags") flags.push(line);
+      else if (mode === "risk") riskText += line + " ";
+    }
+
+    setCompanyLines(companies);
+    setRedFlags(flags);
+    setRiskParagraph(riskText.trim());
   };
 
   const handleDownload = () => {
@@ -113,10 +135,36 @@ export default function RedFlagChecker() {
               ⚠️ Builder Risk Summary
             </div>
 
-            <div
-              className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-800"
-              dangerouslySetInnerHTML={{ __html: htmlSummary }}
-            />
+            {companyLines.length > 0 && (
+              <div className="mb-2">
+                <div className="font-semibold text-gray-700 mb-1">🛠️ Involved Companies:</div>
+                <ul className="list-disc ml-4 text-sm text-gray-800">
+                  {companyLines.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {redFlags.length > 0 && (
+              <div className="mb-2">
+                <div className="font-semibold text-gray-700 mb-1">🚩 Key Red Flags:</div>
+                <ul className="list-disc ml-4 text-sm text-gray-800">
+                  {redFlags.map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {riskParagraph && (
+              <div>
+                <div className="font-semibold text-gray-700 mb-1">📌 Risk Assessment:</div>
+                <p className="text-sm text-gray-800 leading-relaxed">
+                  {riskParagraph.length > 400 ? riskParagraph.slice(0, 400) + "..." : riskParagraph}
+                </p>
+              </div>
+            )}
 
             {fullReport && (
               <button
