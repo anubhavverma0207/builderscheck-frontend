@@ -1,43 +1,56 @@
 "use client";
-
 import { useState } from "react";
-import { CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 export default function RedFlagChecker() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [parsedSummary, setParsedSummary] = useState<string | null>(null);
+  const [fullReport, setFullReport] = useState<string | null>(null);
 
   const handleCheck = async () => {
     if (!name.trim()) return;
-
     setLoading(true);
+    setParsedSummary(null);
+    setFullReport(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/run-redflag`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          openai_key: process.env.NEXT_PUBLIC_OPENAI_KEY,
-          serpapi_key: process.env.NEXT_PUBLIC_SERPAPI_KEY,
-        }),
-      });
-
-      if (!response.ok) throw new Error("API Error");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/run-redflag`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name }),
+        }
+      );
 
       const data = await response.json();
-      console.log("✅ API Response:", data);
-      alert("✅ Success!\nCheck the console for results.");
+
+      if (response.ok && data.report) {
+        const parsed = JSON.parse(data.report);
+        setParsedSummary(parsed?.parsed_summary || "No summary available.");
+        setFullReport(data.report);
+      } else {
+        setParsedSummary("An error occurred while analyzing the builder.");
+      }
     } catch (error) {
-      console.error("❌ Error:", error);
-      alert("Something went wrong. Check console.");
+      console.error("Error:", error);
+      setParsedSummary("Unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownload = () => {
+    if (!fullReport) return;
+    const blob = new Blob([fullReport], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${name.replace(/\s+/g, "_")}_report.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -46,29 +59,55 @@ export default function RedFlagChecker() {
         🔍 Trusted builder background checks for Kiwi homeowners
       </p>
 
-      <CardContent className="w-full max-w-md shadow-xl p-6 flex flex-col gap-4">
+      <div className="w-full max-w-md shadow-xl p-6 flex flex-col gap-4 bg-white rounded-lg border">
         <h1 className="text-xl font-semibold text-center flex items-center justify-center gap-2">
-          <span role="img" aria-label="Search">🔍</span> BuildersCheck
+          <span role="img" aria-label="Search">🔎</span> BuildersCheck
         </h1>
+
         <p className="text-sm text-center text-gray-500">
           Enter builder or company name to check for risk flags
         </p>
 
-        <Input
+        <input
           type="text"
+          className="w-full border px-4 py-2 rounded text-sm"
           placeholder="e.g. Wade Eatts or Oceane Holdings"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
-        <Button
+        <button
           onClick={handleCheck}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition ${
+            loading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
           disabled={loading}
         >
           {loading ? "Checking..." : "Run Background Check"}
-        </Button>
-      </CardContent>
+        </button>
+
+        {loading && (
+          <div className="flex justify-center items-center my-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-400 border-t-transparent" />
+          </div>
+        )}
+
+        {parsedSummary && (
+          <div className="mt-4 text-sm text-gray-800 bg-gray-100 p-4 rounded shadow">
+            <h2 className="font-semibold mb-2">✅ AI Summary:</h2>
+            <p>{parsedSummary}</p>
+
+            {fullReport && (
+              <button
+                onClick={handleDownload}
+                className="mt-4 text-white bg-gray-700 hover:bg-gray-900 px-4 py-2 rounded"
+              >
+                Download Full Report
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
