@@ -29,7 +29,7 @@ export default function RedFlagChecker() {
 
       if (response.ok && data.report) {
         const parsed = JSON.parse(data.report);
-        setParsedSummary(parsed?.parsed_summary || "No summary available.");
+        setParsedSummary(parsed?.ai_summary || "No summary available.");
         setFullReport(data.report);
       } else {
         setParsedSummary("An error occurred while analyzing the builder.");
