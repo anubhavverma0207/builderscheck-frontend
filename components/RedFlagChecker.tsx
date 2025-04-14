@@ -1,16 +1,18 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useMemo } from "react";
+import { markdownToHtml } from "@/lib/markdown";
 
 export default function RedFlagChecker() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [parsedSummary, setParsedSummary] = useState<string | null>(null);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [fullReport, setFullReport] = useState<string | null>(null);
 
   const handleCheck = async () => {
     if (!name.trim()) return;
     setLoading(true);
-    setParsedSummary(null);
+    setAiSummary(null);
     setFullReport(null);
 
     try {
@@ -29,16 +31,14 @@ export default function RedFlagChecker() {
 
       if (response.ok && data.report) {
         const parsed = JSON.parse(data.report);
-        setParsedSummary(
-          parsed?.ai_summary || parsed?.parsed_summary || "No summary available."
-        );
+        setAiSummary(parsed?.ai_summary || "No summary available.");
         setFullReport(data.report);
       } else {
-        setParsedSummary("An error occurred while analyzing the builder.");
+        setAiSummary("An error occurred while analyzing the builder.");
       }
     } catch (error) {
       console.error("Error:", error);
-      setParsedSummary("Unexpected error occurred. Please try again.");
+      setAiSummary("Unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -54,6 +54,8 @@ export default function RedFlagChecker() {
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const htmlSummary = useMemo(() => markdownToHtml(aiSummary || ""), [aiSummary]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
@@ -94,10 +96,16 @@ export default function RedFlagChecker() {
           </div>
         )}
 
-        {parsedSummary && (
-          <div className="mt-4 text-sm text-gray-800 bg-gray-100 p-4 rounded shadow whitespace-pre-line">
-            <h2 className="font-semibold mb-2">✅ AI Summary:</h2>
-            <p>{parsedSummary}</p>
+        {aiSummary && (
+          <div className="mt-4 bg-gray-100 p-4 rounded shadow">
+            <div className="text-sm font-semibold mb-2 text-yellow-700 flex items-center gap-1">
+              <span role="img" aria-label="warning">⚠️</span> AI Summary (for your awareness):
+            </div>
+
+            <div
+              className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-800"
+              dangerouslySetInnerHTML={{ __html: htmlSummary }}
+            />
 
             {fullReport && (
               <button
