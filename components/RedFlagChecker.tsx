@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — Improved AI Summary with Section Parsing and Cautious Tone
+// RedFlagChecker.tsx — Polished Summary with Cautious Language & Clean UI
 
 "use client";
 
@@ -52,12 +52,15 @@ export default function RedFlagChecker() {
     }
   };
 
+  const stripMarkdown = (text: string) => {
+    return text.replace(/[*_`>#\[\]]/g, "").trim();
+  };
+
   const parseSummarySections = (summary: string) => {
     const lines = summary.split("\n").map((line) => line.trim()).filter(Boolean);
     const companies: string[] = [];
     const flags: string[] = [];
     let riskText = "";
-
     let mode: "company" | "flags" | "risk" = "company";
 
     for (const line of lines) {
@@ -69,9 +72,16 @@ export default function RedFlagChecker() {
         continue;
       }
 
-      if (mode === "company" && line.startsWith("•")) companies.push(line);
-      else if (mode === "flags") flags.push(line);
-      else if (mode === "risk") riskText += line + " ";
+      if (mode === "company" && line.startsWith("•")) {
+        const plain = stripMarkdown(line.replace(/^•\s*/, ""));
+        companies.push(
+          `• ${plain.split("–")[0].trim()} has been associated with ${plain.split("–")[1]?.trim() || "potential risk"} (based on public search results)`
+        );
+      } else if (mode === "flags") {
+        flags.push(stripMarkdown(line));
+      } else if (mode === "risk") {
+        riskText += stripMarkdown(line) + " ";
+      }
     }
 
     setCompanyLines(companies);
@@ -92,7 +102,7 @@ export default function RedFlagChecker() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <p className="text-base text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         🔍 Trusted builder background checks for Kiwi homeowners
       </p>
 
@@ -130,15 +140,15 @@ export default function RedFlagChecker() {
         )}
 
         {aiSummary && (
-          <div className="mt-4 bg-gray-100 p-4 rounded shadow">
-            <div className="text-sm font-semibold mb-3 text-yellow-700 flex items-center gap-1">
+          <div className="mt-4 bg-gray-100 p-4 rounded shadow text-xs">
+            <div className="text-xs font-semibold mb-3 text-yellow-700 flex items-center gap-1">
               ⚠️ Builder Risk Summary
             </div>
 
             {companyLines.length > 0 && (
               <div className="mb-2">
                 <div className="font-semibold text-gray-700 mb-1">🛠️ Involved Companies:</div>
-                <ul className="list-disc ml-4 text-sm text-gray-800">
+                <ul className="list-disc ml-4 text-gray-800">
                   {companyLines.map((c, i) => (
                     <li key={i}>{c}</li>
                   ))}
@@ -149,7 +159,7 @@ export default function RedFlagChecker() {
             {redFlags.length > 0 && (
               <div className="mb-2">
                 <div className="font-semibold text-gray-700 mb-1">🚩 Key Red Flags:</div>
-                <ul className="list-disc ml-4 text-sm text-gray-800">
+                <ul className="list-disc ml-4 text-gray-800">
                   {redFlags.map((f, i) => (
                     <li key={i}>{f}</li>
                   ))}
@@ -160,8 +170,11 @@ export default function RedFlagChecker() {
             {riskParagraph && (
               <div>
                 <div className="font-semibold text-gray-700 mb-1">📌 Risk Assessment:</div>
-                <p className="text-sm text-gray-800 leading-relaxed">
+                <p className="text-gray-700 leading-relaxed">
                   {riskParagraph.length > 400 ? riskParagraph.slice(0, 400) + "..." : riskParagraph}
+                </p>
+                <p className="mt-2 italic text-gray-500">
+                  This summary is based on search results and public references. Please verify with official sources before making decisions.
                 </p>
               </div>
             )}
