@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — fixed logic to skip red flags UI for clean builder profiles
+// RedFlagChecker.tsx — fixed to ignore 'no red flags found' placeholder bullets
 
 "use client";
 
@@ -67,6 +67,15 @@ export default function RedFlagChecker() {
 
       if (mode === "company" && line.startsWith("•")) {
         const plain = stripMarkdown(line.replace(/^•\s*/, ""));
+        const lowered = plain.toLowerCase();
+        if (
+          lowered.includes("no serious red flags") ||
+          lowered.includes("no red flags found") ||
+          lowered.includes("no concerns")
+        ) {
+          continue;
+        }
+
         const [company, statusRaw] = plain.split("–");
         let status = statusRaw?.toLowerCase() || "";
 
