@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — Grouped summary + cautious phrasing + concise bullets
+// RedFlagChecker.tsx — Dynamic risk paragraph for clean or flagged builder
 
 "use client";
 
@@ -53,7 +53,6 @@ export default function RedFlagChecker() {
   const parseSummarySections = (summary: string) => {
     const lines = summary.split("\n").map((line) => line.trim()).filter(Boolean);
     const companies: string[] = [];
-    let riskText = "";
     let mode: "company" | "risk" = "company";
 
     for (const line of lines) {
@@ -76,13 +75,21 @@ export default function RedFlagChecker() {
         status = status.replace(/possibly|could be|unclear|based on.*$/gi, "").trim();
 
         companies.push(`• ${company.trim()} ${phrasing} ${status}`);
-      } else if (mode === "risk") {
-        riskText += stripMarkdown(line) + " ";
       }
     }
 
+    // If no red flag lines found
+    if (companies.length === 0) {
+      setRiskParagraph(
+        `We couldn’t find any major financial red flags associated with ${name} based on public search results. However, we still recommend conducting your own due diligence before entering into any agreements.`
+      );
+    } else {
+      setRiskParagraph(
+        `Several companies linked to ${name} may have been involved in liquidation or winding up. This could indicate financial instability or mismanagement. While this does not confirm wrongdoing, it suggests a need for caution. We recommend verifying details independently before entering any agreements.`
+      );
+    }
+
     setCompanyLines(companies);
-    setRiskParagraph(riskText.trim());
   };
 
   const handleDownload = () => {
@@ -155,7 +162,7 @@ export default function RedFlagChecker() {
             <div>
               <div className="font-semibold text-gray-700 mb-1">📌 Risk Assessment:</div>
               <p className="text-gray-700 leading-relaxed">
-                {riskParagraph.length > 400 ? riskParagraph.slice(0, 400) + "..." : riskParagraph}
+                {riskParagraph}
               </p>
               <p className="mt-2 italic text-gray-500">
                 This summary is based on search results and public references. These findings may reflect previous or ongoing risks. Please verify with official sources before making decisions.
