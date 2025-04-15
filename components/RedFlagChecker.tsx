@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — fixed to ignore 'no red flags found' placeholder bullets
+// RedFlagChecker.tsx — fixed duplicate companyLines in parsed AI summary
 
 "use client";
 
@@ -90,9 +90,20 @@ export default function RedFlagChecker() {
       }
     }
 
-    const isClean = companies.length === 0;
+    // ✅ Deduplicate entries
+    const seen = new Set();
+    const uniqueCompanies = [];
+    for (const c of companies) {
+      const key = c.toLowerCase().replace(/\s+/g, " ").trim();
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueCompanies.push(c);
+      }
+    }
+
+    const isClean = uniqueCompanies.length === 0;
     setHasFlags(!isClean);
-    setCompanyLines(companies);
+    setCompanyLines(uniqueCompanies);
 
     if (isClean) {
       setRiskParagraph(
