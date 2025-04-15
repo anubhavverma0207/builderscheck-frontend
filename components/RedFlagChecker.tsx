@@ -1,5 +1,3 @@
-// RedFlagChecker.tsx — Final Polished Summary with Cautious Phrasing
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -63,7 +61,7 @@ export default function RedFlagChecker() {
 
     for (const line of lines) {
       if (/key red flags/i.test(line)) {
-        continue; // skip this section
+        continue; // skip entire section
       } else if (/risk assessment/i.test(line)) {
         mode = "risk";
         continue;
@@ -73,7 +71,7 @@ export default function RedFlagChecker() {
         const plain = stripMarkdown(line.replace(/^•\s*/, ""));
         const [company, status] = plain.split("–");
         companies.push(
-          `• Search results suggest ${company.trim()} could be associated with ${status?.trim() || "potential financial risk"}`
+          `• Search results suggest ${company.trim()} could be associated with ${status?.trim() || "financial risk"}`
         );
       } else if (mode === "risk") {
         riskText += stripMarkdown(line) + " ";
@@ -157,7 +155,7 @@ export default function RedFlagChecker() {
                 {riskParagraph.length > 400 ? riskParagraph.slice(0, 400) + "..." : riskParagraph}
               </p>
               <p className="mt-2 italic text-gray-500">
-                This summary is based on search results and public references. These findings could reflect previous or ongoing issues. Please verify with official sources before making decisions.
+                This summary is based on search results and public references. These findings may reflect previous or ongoing risks. Please verify with official sources before making decisions.
               </p>
             </div>
 
