@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — Polished Summary with Cautious Language & Clean UI
+// RedFlagChecker.tsx — Final Polished Summary with Cautious Phrasing
 
 "use client";
 
@@ -12,7 +12,6 @@ export default function RedFlagChecker() {
   const [fullReport, setFullReport] = useState<string | null>(null);
 
   const [companyLines, setCompanyLines] = useState<string[]>([]);
-  const [redFlags, setRedFlags] = useState<string[]>([]);
   const [riskParagraph, setRiskParagraph] = useState<string>("");
 
   const handleCheck = async () => {
@@ -59,14 +58,12 @@ export default function RedFlagChecker() {
   const parseSummarySections = (summary: string) => {
     const lines = summary.split("\n").map((line) => line.trim()).filter(Boolean);
     const companies: string[] = [];
-    const flags: string[] = [];
     let riskText = "";
-    let mode: "company" | "flags" | "risk" = "company";
+    let mode: "company" | "risk" = "company";
 
     for (const line of lines) {
       if (/key red flags/i.test(line)) {
-        mode = "flags";
-        continue;
+        continue; // skip this section
       } else if (/risk assessment/i.test(line)) {
         mode = "risk";
         continue;
@@ -74,18 +71,16 @@ export default function RedFlagChecker() {
 
       if (mode === "company" && line.startsWith("•")) {
         const plain = stripMarkdown(line.replace(/^•\s*/, ""));
+        const [company, status] = plain.split("–");
         companies.push(
-          `• ${plain.split("–")[0].trim()} has been associated with ${plain.split("–")[1]?.trim() || "potential risk"} (based on public search results)`
+          `• Search results suggest ${company.trim()} could be associated with ${status?.trim() || "potential financial risk"}`
         );
-      } else if (mode === "flags") {
-        flags.push(stripMarkdown(line));
       } else if (mode === "risk") {
         riskText += stripMarkdown(line) + " ";
       }
     }
 
     setCompanyLines(companies);
-    setRedFlags(flags);
     setRiskParagraph(riskText.trim());
   };
 
@@ -156,28 +151,15 @@ export default function RedFlagChecker() {
               </div>
             )}
 
-            {redFlags.length > 0 && (
-              <div className="mb-2">
-                <div className="font-semibold text-gray-700 mb-1">🚩 Key Red Flags:</div>
-                <ul className="list-disc ml-4 text-gray-800">
-                  {redFlags.map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {riskParagraph && (
-              <div>
-                <div className="font-semibold text-gray-700 mb-1">📌 Risk Assessment:</div>
-                <p className="text-gray-700 leading-relaxed">
-                  {riskParagraph.length > 400 ? riskParagraph.slice(0, 400) + "..." : riskParagraph}
-                </p>
-                <p className="mt-2 italic text-gray-500">
-                  This summary is based on search results and public references. Please verify with official sources before making decisions.
-                </p>
-              </div>
-            )}
+            <div>
+              <div className="font-semibold text-gray-700 mb-1">📌 Risk Assessment:</div>
+              <p className="text-gray-700 leading-relaxed">
+                {riskParagraph.length > 400 ? riskParagraph.slice(0, 400) + "..." : riskParagraph}
+              </p>
+              <p className="mt-2 italic text-gray-500">
+                This summary is based on search results and public references. These findings could reflect previous or ongoing issues. Please verify with official sources before making decisions.
+              </p>
+            </div>
 
             {fullReport && (
               <button
