@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — fully dynamic clean vs flagged handling with green ✅ check for clean reports
+// RedFlagChecker.tsx — fixed logic to skip red flags UI for clean builder profiles
 
 "use client";
 
@@ -81,19 +81,19 @@ export default function RedFlagChecker() {
       }
     }
 
-    if (companies.length === 0) {
-      setHasFlags(false);
+    const isClean = companies.length === 0;
+    setHasFlags(!isClean);
+    setCompanyLines(companies);
+
+    if (isClean) {
       setRiskParagraph(
         `✅ No red flags were detected for ${name} based on public search results. However, we still recommend conducting your own due diligence before entering into any agreements.`
       );
     } else {
-      setHasFlags(true);
       setRiskParagraph(
         `Several companies linked to ${name} may have been involved in liquidation or winding up. This could indicate financial instability or mismanagement. While this does not confirm wrongdoing, it suggests a need for caution. We recommend verifying details independently before entering any agreements.`
       );
     }
-
-    setCompanyLines(companies);
   };
 
   const handleDownload = () => {
