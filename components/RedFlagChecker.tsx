@@ -1,4 +1,4 @@
-// RedFlagChecker.tsx — Dynamic risk paragraph for clean or flagged builder
+// RedFlagChecker.tsx — fully dynamic clean vs flagged handling with green ✅ check for clean reports
 
 "use client";
 
@@ -11,12 +11,15 @@ export default function RedFlagChecker() {
   const [fullReport, setFullReport] = useState<string | null>(null);
   const [companyLines, setCompanyLines] = useState<string[]>([]);
   const [riskParagraph, setRiskParagraph] = useState<string>("");
+  const [hasFlags, setHasFlags] = useState(false);
 
   const handleCheck = async () => {
     if (!name.trim()) return;
     setLoading(true);
     setAiSummary(null);
     setFullReport(null);
+    setCompanyLines([]);
+    setHasFlags(false);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/run-redflag`, {
@@ -78,12 +81,13 @@ export default function RedFlagChecker() {
       }
     }
 
-    // If no red flag lines found
     if (companies.length === 0) {
+      setHasFlags(false);
       setRiskParagraph(
-        `We couldn’t find any major financial red flags associated with ${name} based on public search results. However, we still recommend conducting your own due diligence before entering into any agreements.`
+        `✅ No red flags were detected for ${name} based on public search results. However, we still recommend conducting your own due diligence before entering into any agreements.`
       );
     } else {
+      setHasFlags(true);
       setRiskParagraph(
         `Several companies linked to ${name} may have been involved in liquidation or winding up. This could indicate financial instability or mismanagement. While this does not confirm wrongdoing, it suggests a need for caution. We recommend verifying details independently before entering any agreements.`
       );
@@ -141,12 +145,12 @@ export default function RedFlagChecker() {
         )}
 
         {aiSummary && (
-          <div className="mt-4 bg-gray-100 p-4 rounded shadow text-xs">
-            <div className="text-xs font-semibold mb-3 text-yellow-700 flex items-center gap-1">
-              ⚠️ Builder Risk Summary
+          <div className={`mt-4 p-4 rounded shadow text-xs ${hasFlags ? "bg-gray-100" : "bg-green-50 border border-green-300"}`}>
+            <div className={`text-xs font-semibold mb-3 flex items-center gap-1 ${hasFlags ? "text-yellow-700" : "text-green-700"}`}>
+              {hasFlags ? "⚠️ Builder Risk Summary" : "✅ No Major Issues Found"}
             </div>
 
-            {companyLines.length > 0 && (
+            {hasFlags && companyLines.length > 0 && (
               <div className="mb-2">
                 <p className="mb-1 text-gray-700">
                   Search results suggest the following companies could be associated with potential financial risk:
