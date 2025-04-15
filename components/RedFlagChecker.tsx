@@ -1,14 +1,14 @@
+// RedFlagChecker.tsx — Grouped summary + cautious phrasing + concise bullets
+
 "use client";
 
-import { useState, useEffect } from "react";
-import { markdownToHtml } from "@/lib/markdown";
+import { useState } from "react";
 
 export default function RedFlagChecker() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [fullReport, setFullReport] = useState<string | null>(null);
-
   const [companyLines, setCompanyLines] = useState<string[]>([]);
   const [riskParagraph, setRiskParagraph] = useState<string>("");
 
@@ -19,16 +19,13 @@ export default function RedFlagChecker() {
     setFullReport(null);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/run-redflag`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name }),
-        }
-      );
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/run-redflag`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      });
 
       const data = await response.json();
 
@@ -60,19 +57,25 @@ export default function RedFlagChecker() {
     let mode: "company" | "risk" = "company";
 
     for (const line of lines) {
-      if (/key red flags/i.test(line)) {
-        continue; // skip entire section
-      } else if (/risk assessment/i.test(line)) {
+      if (/key red flags/i.test(line)) continue;
+      if (/risk assessment/i.test(line)) {
         mode = "risk";
         continue;
       }
 
       if (mode === "company" && line.startsWith("•")) {
         const plain = stripMarkdown(line.replace(/^•\s*/, ""));
-        const [company, status] = plain.split("–");
-        companies.push(
-          `• Search results suggest ${company.trim()} could be associated with ${status?.trim() || "financial risk"}`
-        );
+        const [company, statusRaw] = plain.split("–");
+        let status = statusRaw?.toLowerCase() || "";
+
+        let phrasing = "may be associated with";
+        if (status.includes("possibly") || status.includes("could") || status.includes("unclear")) {
+          phrasing = "could be associated with";
+        }
+
+        status = status.replace(/possibly|could be|unclear|based on.*$/gi, "").trim();
+
+        companies.push(`• ${company.trim()} ${phrasing} ${status}`);
       } else if (mode === "risk") {
         riskText += stripMarkdown(line) + " ";
       }
@@ -118,9 +121,7 @@ export default function RedFlagChecker() {
 
         <button
           onClick={handleCheck}
-          className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition ${
-            loading ? "opacity-70 cursor-not-allowed" : ""
-          }`}
+          className={`w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
           disabled={loading}
         >
           {loading ? "Checking..." : "Run Background Check"}
@@ -140,7 +141,9 @@ export default function RedFlagChecker() {
 
             {companyLines.length > 0 && (
               <div className="mb-2">
-                <div className="font-semibold text-gray-700 mb-1">🛠️ Involved Companies:</div>
+                <p className="mb-1 text-gray-700">
+                  Search results suggest the following companies could be associated with potential financial risk:
+                </p>
                 <ul className="list-disc ml-4 text-gray-800">
                   {companyLines.map((c, i) => (
                     <li key={i}>{c}</li>
